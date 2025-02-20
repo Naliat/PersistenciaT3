@@ -17,6 +17,6 @@ app.include_router(estoque.router)
 
 @app.on_event("startup")
 async def startup():
-    logging.info("Conectando ao MongoDB...")
+    logging.info("Conectando ao MongoDB Atlas...")
     await engine.client.admin.command('ping')
-    logging.info("Conexão com MongoDB estabelecida com sucesso!")
+    logging.info("Conexão com MongoDB Atlas estabelecida com sucesso!")

@@ -289,6 +289,7 @@ name = "persistenciat3"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "dnspython" },
     { name = "fastapi", extra = ["standard"] },
     { name = "motor" },
     { name = "odmantic" },
@@ -296,6 +297,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "dnspython", specifier = ">=2.7.0" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.115.8" },
     { name = "motor", extras = ["srv"], specifier = ">=3.7.0" },
     { name = "odmantic", specifier = ">=1.0.2" },

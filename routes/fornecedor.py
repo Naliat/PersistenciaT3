@@ -1,6 +1,5 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Query
 from models.fornecedor import Fornecedor
-from odmantic import ObjectId
 from database import engine
 from typing import Optional
 

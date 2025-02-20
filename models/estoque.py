@@ -1,8 +1,6 @@
-from odmantic import Model, Reference
+from odmantic import Model, Reference, Field
 from datetime import datetime
-from typing import ClassVar
-from models.remedio import Remedio
-from odmantic import Field
+from .remedio import Remedio
 
 class Estoque(Model):
     remedio: Remedio = Reference()
@@ -12,10 +10,4 @@ class Estoque(Model):
     criado_em: datetime = Field(default_factory=datetime.utcnow)
     atualizado_em: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        collection: ClassVar[str] = "estoques"
-        indexes: ClassVar[list] = [
-            ("remedio",),
-            ("validade",),
-            ("data_entrada", "validade")
-        ]
+    model_config = {"collection": "estoques"}
