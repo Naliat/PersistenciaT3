@@ -7,7 +7,7 @@ class Remedio(Model):
     descricao: str
     preco: float = Field(gt=0)
     validade: date
-    fornecedor: Fornecedor = Reference()
+    fornecedor: Fornecedor = Reference()  # Referência para o modelo Fornecedor
     criado_em: datetime = Field(default_factory=datetime.utcnow)
     atualizado_em: datetime = Field(default_factory=datetime.utcnow)
 

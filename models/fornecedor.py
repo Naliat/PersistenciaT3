@@ -9,5 +9,4 @@ class Fornecedor(Model):
     criado_em: datetime = Field(default_factory=datetime.utcnow)
     atualizado_em: datetime = Field(default_factory=datetime.utcnow)
 
-    # Nova sintaxe de configuração para Pydantic v2
     model_config = {"collection": "fornecedores"}

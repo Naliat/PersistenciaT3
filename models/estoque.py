@@ -3,7 +3,7 @@ from datetime import datetime
 from .remedio import Remedio
 
 class Estoque(Model):
-    remedio: Remedio = Reference()
+    remedio: Remedio = Reference()  # Referência para o modelo Remedio
     quantidade: int = Field(gt=0)
     data_entrada: datetime = Field(default_factory=datetime.utcnow)
     validade: datetime
