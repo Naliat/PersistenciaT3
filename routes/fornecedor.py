@@ -1,6 +1,7 @@
 from odmantic import ObjectId
 import logging
-from fastapi import APIRouter, Query, HTTPException, Path
+import re
+from fastapi import APIRouter, Query, HTTPException, Path, Body
 from models.fornecedor import Fornecedor
 from database import engine
 from typing import Optional
@@ -73,19 +74,25 @@ async def obter_fornecedor_por_id(
 # UPDATE: Atualizar um fornecedor existente
 @router.put("/{fornecedor_id}", response_model=Fornecedor)
 async def atualizar_fornecedor(
-    fornecedor_id: int = Path(..., description="ID do fornecedor a ser atualizado"),
-    fornecedor_update: Fornecedor = None
+    fornecedor_id: str = Path(..., description="ID do fornecedor a ser atualizado"),
+    fornecedor_update: Fornecedor = Body(...)
 ):
     logger.info("Atualizando fornecedor com ID: %s", fornecedor_id)
-    fornecedor_existente = await engine.find_one(Fornecedor, {"id": fornecedor_id})
+    
+    fornecedor_existente = await engine.find_one(Fornecedor, Fornecedor.id == ObjectId(fornecedor_id))
+
     if not fornecedor_existente:
         logger.error("Fornecedor com ID %s não encontrado para atualização", fornecedor_id)
         raise HTTPException(status_code=404, detail="Fornecedor não encontrado")
+
     update_data = fornecedor_update.dict(exclude_unset=True)
+    
     for key, value in update_data.items():
         setattr(fornecedor_existente, key, value)
+
     fornecedor_existente.atualizado_em = datetime.utcnow()
     updated_fornecedor = await engine.save(fornecedor_existente)
+    
     logger.info("Fornecedor com ID %s atualizado", fornecedor_id)
     return updated_fornecedor
 
@@ -104,17 +111,25 @@ async def deletar_fornecedor(
     return {"message": "Fornecedor deletado com sucesso"}
 
 # ----------------- Endpoints de Busca (GET) -----------------
+# Função para normalizar o CNPJ (remover caracteres especiais)
+def normalizar_cnpj(cnpj: str) -> str:
+    return re.sub(r'[^0-9]', '', cnpj)
 
+# Buscar fornecedor pelo CNPJ
 @router.get("/buscar/cnpj/{cnpj}", response_model=Fornecedor)
 async def buscar_fornecedor_por_cnpj(
     cnpj: str = Path(..., description="CNPJ exato")
 ):
-    logger.info("Buscando fornecedor com CNPJ: %s", cnpj)
-    fornecedor = await engine.find_one(Fornecedor, {"cnpj": cnpj})
+    cnpj_normalizado = normalizar_cnpj(cnpj)  # Normalizando o CNPJ
+    logger.info("Buscando fornecedor com CNPJ: %s", cnpj_normalizado)
+    
+    fornecedor = await engine.find_one(Fornecedor, {"cnpj": cnpj_normalizado})
+    
     if not fornecedor:
-        logger.error("Fornecedor com CNPJ %s não encontrado", cnpj)
+        logger.error("Fornecedor com CNPJ %s não encontrado", cnpj_normalizado)
         raise HTTPException(status_code=404, detail="Fornecedor não encontrado")
-    logger.info("Fornecedor com CNPJ %s encontrado", cnpj)
+    
+    logger.info("Fornecedor com CNPJ %s encontrado", cnpj_normalizado)
     return fornecedor
 
 @router.get("/buscar/prefixo", response_model=dict)
@@ -183,6 +198,11 @@ async def buscar_fornecedores_criados_apos(
 
 @router.get("/contagem", response_model=dict)
 async def contar_fornecedores():
-    total = await engine.count(Fornecedor, {})
-    logger.info("Contagem total de fornecedores: %s", total)
-    return {"total_fornecedores": total}
+    try:
+        logger.info("Iniciando contagem de fornecedores")
+        total = await engine.count(Fornecedor, {})  # Conta todos os fornecedores
+        logger.info(f"Contagem total de fornecedores: {total}")
+        return {"total_fornecedores": total}
+    except Exception as e:
+        logger.error(f"Erro ao contar fornecedores: {str(e)}")
+        raise HTTPException(status_code=500, detail="Erro ao contar fornecedores")
