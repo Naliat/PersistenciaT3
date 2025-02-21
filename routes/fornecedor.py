@@ -1,3 +1,4 @@
+from odmantic import ObjectId
 import logging
 from fastapi import APIRouter, Query, HTTPException, Path
 from models.fornecedor import Fornecedor
@@ -56,19 +57,19 @@ async def listar_fornecedores(
         "limite": limite
     }
 
+
 # READ: Obter fornecedor por ID
 @router.get("/{fornecedor_id}", response_model=Fornecedor)
 async def obter_fornecedor_por_id(
-    fornecedor_id: int = Path(..., description="ID do fornecedor")
+    fornecedor_id: str  = Path(..., description="ID do fornecedor")
 ):
     logger.info("Obtendo fornecedor por ID: %s", fornecedor_id)
-    fornecedor = await engine.find_one(Fornecedor, {"id": fornecedor_id})
+    fornecedor = await engine.find_one(Fornecedor, Fornecedor.id == ObjectId(fornecedor_id))
     if not fornecedor:
         logger.error("Fornecedor com ID %s não encontrado", fornecedor_id)
         raise HTTPException(status_code=404, detail="Fornecedor não encontrado")
     logger.info("Fornecedor com ID %s obtido com sucesso", fornecedor_id)
     return fornecedor
-
 # UPDATE: Atualizar um fornecedor existente
 @router.put("/{fornecedor_id}", response_model=Fornecedor)
 async def atualizar_fornecedor(
