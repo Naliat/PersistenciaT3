@@ -114,7 +114,7 @@ async def atualizar_remedio(
     update_data = remedio_update.dict(exclude_unset=True)
     for key, value in update_data.items():
         setattr(remedio_existente, key, value)
-    remedio_existente.atualizado_em = datetime.timezone.utc()
+    remedio_existente.atualizado_em = datetime.utcnow()
 
     updated_remedio = await engine.save(remedio_existente)
     logger.info("Remédio com ID %s atualizado com sucesso", remedio_id)
@@ -123,13 +123,22 @@ async def atualizar_remedio(
 # DELETE: Remover um remédio
 @router.delete("/{remedio_id}", response_model=dict)
 async def deletar_remedio(
-    remedio_id: int = Path(..., description="ID do remédio a ser deletado")
+    remedio_id: str = Path(..., description="ID do remédio a ser deletado")
 ):
+    
+    try:
+        remedio_id = ObjectId(remedio_id)
+    except Exception as e:
+        logger.error("ID do remédio inválido: %s", remedio_id)
+        raise HTTPException(status_code=400, detail="ID do remédio inválido")
+
     logger.info("Deletando remédio com ID: %s", remedio_id)
-    remedio = await engine.find_one(Remedio, {"id": remedio_id})
+
+    remedio = await engine.find_one(Remedio, {"_id": remedio_id})
     if not remedio:
         logger.error("Remédio com ID %s não encontrado para deleção", remedio_id)
         raise HTTPException(status_code=404, detail="Remédio não encontrado")
+    
     await engine.delete(remedio)
     logger.info("Remédio com ID %s deletado com sucesso", remedio_id)
     return {"message": "Remédio deletado com sucesso"}
