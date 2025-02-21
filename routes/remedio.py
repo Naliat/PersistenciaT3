@@ -1,4 +1,5 @@
 import logging
+from bson import ObjectId
 from fastapi import APIRouter, Query, HTTPException, Path
 from models.remedio import Remedio
 from models.fornecedor import Fornecedor
@@ -23,15 +24,23 @@ router = APIRouter(
 async def criar_remedio(remedio: Remedio):
     logger.info("Iniciando criação do remédio: %s", remedio.nome)
 
-    fornecedor = await engine.find_one(Fornecedor, {"id": remedio.fornecedor_id})
+    # Converte o fornecedor_id para ObjectId
+    try:
+        fornecedor_id = ObjectId(remedio.fornecedor_id)
+    except Exception as e:
+        logger.error("ID do fornecedor inválido: %s", remedio.fornecedor_id)
+        raise HTTPException(status_code=400, detail="ID do fornecedor inválido.")
+
+    # Consulta o fornecedor usando o ObjectId
+    fornecedor = await engine.find_one(Fornecedor, {"_id": fornecedor_id})
     if not fornecedor:
-        logger.error("Fornecedor com ID %s não encontrado para o remédio: %s", remedio.fornecedor_id, remedio.nome)
+        logger.error("Fornecedor com ID %s não encontrado para o remédio: %s", fornecedor_id, remedio.nome)
         raise HTTPException(status_code=400, detail="Fornecedor não encontrado.")
 
+    # Salva o remédio no banco de dados
     novo_remedio = await engine.save(remedio)
     logger.info("Remédio criado com ID: %s", novo_remedio.id)
     return novo_remedio
-
 
 # READ: Listar remédios com filtros (paginação)
 @router.get("/", response_model=dict)
@@ -48,6 +57,8 @@ async def listar_remedios(
     if nome:
         query["nome"] = {"$regex": nome, "$options": "i"}
     if validade_inicio and validade_fim:
+        validade_inicio = datetime.combine(validade_inicio, datetime.min.time())
+        validade_fim = datetime.combine(validade_fim, datetime.max.time())
         query["validade"] = {"$gte": validade_inicio, "$lte": validade_fim}
     total = await engine.count(Remedio, query)
     remedios = await engine.find(Remedio, query, skip=skip, limit=limite, sort=Remedio.validade)
@@ -63,31 +74,48 @@ async def listar_remedios(
 # READ: Obter remédio por ID
 @router.get("/{remedio_id}", response_model=Remedio)
 async def obter_remedio_por_id(
-    remedio_id: int = Path(..., description="ID do remédio")
+    remedio_id: str = Path(..., description="ID do remédio")
 ):
     logger.info("Obtendo remédio por ID: %s", remedio_id)
-    remedio = await engine.find_one(Remedio, {"id": remedio_id})
+
+    try:
+        remedio_id = ObjectId(remedio_id)
+    except Exception as e:
+        logger.error("ID do remédio inválido: %s", remedio_id)
+        raise HTTPException(status_code=400, detail="ID do remédio inválido")
+    
+    remedio = await engine.find_one(Remedio, {"_id": remedio_id})
     if not remedio:
         logger.error("Remédio com ID %s não encontrado", remedio_id)
         raise HTTPException(status_code=404, detail="Remédio não encontrado")
+    
     logger.info("Remédio com ID %s obtido com sucesso", remedio_id)
     return remedio
 
 # UPDATE: Atualizar um remédio existente
 @router.put("/{remedio_id}", response_model=Remedio)
 async def atualizar_remedio(
-    remedio_id: int = Path(..., description="ID do remédio a ser atualizado"),
+    remedio_id: str = Path(..., description="ID do remédio a ser atualizado"),
     remedio_update: Remedio = None
 ):
     logger.info("Atualizando remédio com ID: %s", remedio_id)
-    remedio_existente = await engine.find_one(Remedio, {"id": remedio_id})
+
+    try:
+        remedio_id = ObjectId(remedio_id)
+    except Exception as e:
+        logger.error("ID do remédio inválido: %s", remedio_id)
+        raise HTTPException(status_code=400, detail="ID do remédio inválido")
+    
+    remedio_existente = await engine.find_one(Remedio, {"_id": remedio_id})
     if not remedio_existente:
         logger.error("Remédio com ID %s não encontrado para atualização", remedio_id)
         raise HTTPException(status_code=404, detail="Remédio não encontrado")
+    
     update_data = remedio_update.dict(exclude_unset=True)
     for key, value in update_data.items():
         setattr(remedio_existente, key, value)
-    remedio_existente.atualizado_em = datetime.utcnow()
+    remedio_existente.atualizado_em = datetime.timezone.utc()
+
     updated_remedio = await engine.save(remedio_existente)
     logger.info("Remédio com ID %s atualizado com sucesso", remedio_id)
     return updated_remedio
