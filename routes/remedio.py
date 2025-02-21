@@ -1,6 +1,7 @@
 import logging
 from fastapi import APIRouter, Query, HTTPException, Path
 from models.remedio import Remedio
+from models.fornecedor import Fornecedor
 from database import engine
 from typing import Optional
 from datetime import date, datetime
@@ -21,17 +22,16 @@ router = APIRouter(
 @router.post("/", response_model=Remedio, status_code=201)
 async def criar_remedio(remedio: Remedio):
     logger.info("Iniciando criação do remédio: %s", remedio.nome)
-    # Verificar se o fornecedor existe
-    if remedio.fornecedor_id:
-        fornecedor = await engine.find_one(Fornecedor, {"id": remedio.fornecedor_id})  # Corrigido!
-        if not fornecedor:
-            logger.error("Fornecedor não encontrado para o remédio: %s", remedio.nome)
-            raise HTTPException(status_code=400, detail="Fornecedor não encontrado.")
 
-    # Salvar o remédio
+    fornecedor = await engine.find_one(Fornecedor, {"id": remedio.fornecedor_id})
+    if not fornecedor:
+        logger.error("Fornecedor com ID %s não encontrado para o remédio: %s", remedio.fornecedor_id, remedio.nome)
+        raise HTTPException(status_code=400, detail="Fornecedor não encontrado.")
+
     novo_remedio = await engine.save(remedio)
     logger.info("Remédio criado com ID: %s", novo_remedio.id)
     return novo_remedio
+
 
 # READ: Listar remédios com filtros (paginação)
 @router.get("/", response_model=dict)
