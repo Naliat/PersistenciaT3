@@ -147,13 +147,19 @@ async def deletar_remedio(
 
 @router.get("/fornecedor/{fornecedor_id}", response_model=dict)
 async def listar_remedios_por_fornecedor(
-    fornecedor_id: int = Path(..., description="ID do fornecedor"),
+    fornecedor_id: str = Path(..., description="ID do fornecedor"),
     pagina: int = Query(1, ge=1),
     limite: int = Query(10, ge=1, le=100)
 ):
     logger.info("Listando remédios do fornecedor ID: %s", fornecedor_id)
+    try:
+        fornecedor_id = ObjectId(fornecedor_id)
+    except Exception as e:
+        logger.error("ID do fornecedor inválido: %s", fornecedor_id)
+        raise HTTPException(status_code=400, detail="ID do fornecedor inválido")
+    
     skip = (pagina - 1) * limite
-    query = {"fornecedor.id": fornecedor_id}
+    query = {"fornecedor_id": fornecedor_id}
     total = await engine.count(Remedio, query)
     remedios = await engine.find(Remedio, query, skip=skip, limit=limite, sort=Remedio.nome)
     logger.info("Remédios encontrados para fornecedor %s: %s", fornecedor_id, total)
@@ -181,7 +187,7 @@ async def buscar_remedios_preco_menor(
     preco: float = Query(..., description="Preço máximo")
 ):
     logger.info("Buscando remédios com preço menor que: %s", preco)
-    query = {"preco": {"$lt": preco}}
+    query = {"preco": {"$lte": preco}}
     remedios = await engine.find(Remedio, query, sort=Remedio.preco)
     total = await engine.count(Remedio, query)
     logger.info("Remédios encontrados: %s", total)
