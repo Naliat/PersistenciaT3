@@ -15,8 +15,27 @@ app.include_router(fornecedor.router)
 app.include_router(remedio.router)
 app.include_router(estoque.router)
 
-@app.on_event("startup")
 async def startup():
     logging.info("Conectando ao MongoDB Atlas...")
     await engine.client.admin.command('ping')
     logging.info("Conexão com MongoDB Atlas estabelecida com sucesso!")
+
+async def shutdown():
+    logging.info("Desconectando do MongoDB Atlas...")
+    await engine.client.close()
+    logging.info("Conexão com MongoDB Atlas encerrada com sucesso!")
+
+
+async def startup():
+    logging.info("Conectando ao MongoDB Atlas...")
+    await engine.client.admin.command('ping')
+    logging.info("Conexão com MongoDB Atlas estabelecida com sucesso!")
+
+async def shutdown():
+    logging.info("Desconectando do MongoDB Atlas...")
+    await engine.client.close()
+    logging.info("Conexão com MongoDB Atlas encerrada com sucesso!")
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

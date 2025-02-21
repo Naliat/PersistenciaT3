@@ -6,7 +6,7 @@ class Fornecedor(Model):
     cnpj: str = Field(unique=True)
     telefone: str
     endereco: str
-    criado_em: datetime = Field(default_factory=datetime.utcnow)
-    atualizado_em: datetime = Field(default_factory=datetime.utcnow)
+    criado_em: datetime = Field(default_factory=datetime)
+    atualizado_em: datetime = Field(default_factory=datetime)
 
     model_config = {"collection": "fornecedores"}
