@@ -71,6 +71,12 @@ async def listar_remedios(
         "limite": limite
     }
 
+@router.get("/contagem", response_model=dict)
+async def contar_remedios():
+    total = await engine.count(Remedio, {})
+    logger.info("Contagem total de remédios: %s", total)
+    return {"total_remedios": total}
+
 # READ: Obter remédio por ID
 @router.get("/{remedio_id}", response_model=Remedio)
 async def obter_remedio_por_id(
@@ -204,12 +210,6 @@ async def buscar_remedios_criados(
     total = await engine.count(Remedio, query)
     logger.info("Remédios encontrados: %s", total)
     return {"data": remedios, "total": total}
-
-@router.get("/contagem", response_model=dict)
-async def contar_remedios():
-    total = await engine.count(Remedio, {})
-    logger.info("Contagem total de remédios: %s", total)
-    return {"total_remedios": total}
 
 @router.get("/buscar/prefixo", response_model=dict)
 async def buscar_remedios_por_prefixo(
