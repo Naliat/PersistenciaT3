@@ -1,13 +1,12 @@
-from odmantic import Model, Reference, Field
+from odmantic import Model, Field
 from datetime import datetime, date
-from .fornecedor import Fornecedor
 
 class Remedio(Model):
     nome: str
     descricao: str
     preco: float = Field(gt=0)
     validade: date
-    fornecedor: Fornecedor = Reference()  # Referência para o modelo Fornecedor
+    fornecedor_id: str  # Apenas o ID do fornecedor
     criado_em: datetime = Field(default_factory=datetime.utcnow)
     atualizado_em: datetime = Field(default_factory=datetime.utcnow)
 
