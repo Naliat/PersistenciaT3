@@ -131,7 +131,6 @@ async def deletar_fornecedor(
     
     # Retornar mensagem de sucesso
     return {"message": "Fornecedor deletado com sucesso"}
-
 # ----------------- Endpoints de Busca (GET) -----------------
 # Função para normalizar o CNPJ (remover caracteres especiais)
 def normalizar_cnpj(cnpj: str) -> str:
@@ -153,7 +152,6 @@ async def buscar_fornecedor_por_cnpj(
     
     logger.info("Fornecedor com CNPJ %s encontrado", cnpj_normalizado)
     return fornecedor
-
 @router.get("/buscar/prefixo", response_model=dict)
 async def buscar_fornecedores_por_prefixo(
     prefixo: str = Query(..., description="Prefixo do nome")
@@ -185,17 +183,6 @@ async def listar_fornecedores_ordenados_por_cnpj():
     logger.info("Total de fornecedores encontrados: %s", total)
     return {"data": fornecedores, "total": total}
 
-@router.get("/buscar/telefone", response_model=dict)
-async def buscar_fornecedores_por_telefone(
-    telefone: str = Query(..., description="Parte do telefone")
-):
-    logger.info("Buscando fornecedores com telefone contendo: %s", telefone)
-    query = {"telefone": {"$regex": telefone, "$options": "i"}}
-    fornecedores = await engine.find(Fornecedor, query, sort=Fornecedor.telefone)
-    total = await engine.count(Fornecedor, query)
-    logger.info("Fornecedores encontrados: %s", total)
-    return {"data": fornecedores, "total": total}
-
 @router.get("/buscar/endereco", response_model=dict)
 async def buscar_fornecedores_por_endereco(
     endereco: str = Query(..., description="Parte do endereço")
@@ -217,14 +204,3 @@ async def buscar_fornecedores_criados_apos(
     total = await engine.count(Fornecedor, query)
     logger.info("Fornecedores encontrados: %s", total)
     return {"data": fornecedores, "total": total}
-
-@router.get("/contagem", response_model=dict)
-async def contar_fornecedores():
-    try:
-        logger.info("Iniciando contagem de fornecedores")
-        total = await engine.count(Fornecedor, {})  # Conta todos os fornecedores
-        logger.info(f"Contagem total de fornecedores: {total}")
-        return {"total_fornecedores": total}
-    except Exception as e:
-        logger.error(f"Erro ao contar fornecedores: {str(e)}")
-        raise HTTPException(status_code=500, detail="Erro ao contar fornecedores")
