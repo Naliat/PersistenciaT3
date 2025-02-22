@@ -91,32 +91,57 @@ async def obter_estoque_por_id(
 # UPDATE: Atualizar um estoque existente
 @router.put("/{estoque_id}", response_model=Estoque)
 async def atualizar_estoque(
-    estoque_id: int = Path(..., description="ID do estoque a ser atualizado"),
+    estoque_id: str = Path(..., description="ID do estoque a ser atualizado"),
     estoque_update: Estoque = None
 ):
-    logger.info("Atualizando estoque com ID: %s", estoque_id)
-    estoque_existente = await engine.find_one(Estoque, {"id": estoque_id})
+    # Convertendo o ID de string para ObjectId
+    try:
+        estoque_object_id = ObjectId(estoque_id)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="ID inválido")
+
+    # Buscando o estoque pelo ObjectId
+    estoque_existente = await engine.find_one(Estoque, Estoque.id == estoque_object_id)
+    
     if not estoque_existente:
-        logger.error("Estoque com ID %s não encontrado para atualização", estoque_id)
         raise HTTPException(status_code=404, detail="Estoque não encontrado")
+
+    # Atualizando os dados do estoque
     update_data = estoque_update.dict(exclude_unset=True)
+
+    # Remover o campo 'id' da atualização para evitar tentar alterá-lo
+    update_data.pop("id", None)
+
     for key, value in update_data.items():
         setattr(estoque_existente, key, value)
-    estoque_existente.atualizado_em = datetime.utcnow()
-    updated_estoque = await engine.save(estoque_existente)
-    logger.info("Estoque com ID %s atualizado com sucesso", estoque_id)
-    return updated_estoque
 
-# DELETE: Remover um estoque
+    # Atualizando a data de modificação
+    estoque_existente.atualizado_em = datetime.utcnow()
+
+    # Salvando a atualização
+    updated_estoque = await engine.save(estoque_existente)
+
+    return updated_estoque
 @router.delete("/{estoque_id}", response_model=dict)
 async def deletar_estoque(
-    estoque_id: int = Path(..., description="ID do estoque a ser deletado")
+    estoque_id: str = Path(..., description="ID do estoque a ser deletado")
 ):
     logger.info("Deletando estoque com ID: %s", estoque_id)
-    estoque = await engine.find_one(Estoque, {"id": estoque_id})
+    
+    # Converter o estoque_id para ObjectId, se for válido
+    try:
+        estoque_object_id = ObjectId(estoque_id)
+    except Exception:
+        logger.error("ID de estoque inválido: %s", estoque_id)
+        raise HTTPException(status_code=400, detail="ID do estoque inválido")
+    
+    # Buscar o estoque pelo ObjectId
+    estoque = await engine.find_one(Estoque, {"_id": estoque_object_id})
     if not estoque:
         logger.error("Estoque com ID %s não encontrado para deleção", estoque_id)
         raise HTTPException(status_code=404, detail="Estoque não encontrado")
+    
+    # Deletar o estoque
     await engine.delete(estoque)
     logger.info("Estoque com ID %s deletado com sucesso", estoque_id)
     return {"message": "Estoque deletado com sucesso"}
@@ -180,12 +205,6 @@ async def buscar_estoques_por_mes_validade(
     total = await engine.count(Estoque, query)
     return {"data": itens, "total": total}
 
-# READ: Contar estoques
-@router.get("/contagem", response_model=dict)
-async def contar_estoques():
-    total = await engine.count(Estoque, {})
-    return {"total_estoques": total}
-
 # READ: Buscar estoques por quantidade
 @router.get("/buscar/quantidade", response_model=dict)
 async def buscar_estoques_por_quantidade(
@@ -193,25 +212,5 @@ async def buscar_estoques_por_quantidade(
 ):
     query = {"quantidade": quantidade}
     itens = await engine.find(Estoque, query, sort=Estoque.validade)
-    total = await engine.count(Estoque, query)
-    return {"data": itens, "total": total}
-
-# READ: Buscar estoques com entrada após uma data
-@router.get("/buscar/entrada/apos", response_model=dict)
-async def buscar_estoques_entrada_apos(
-    data: datetime = Query(..., description="Data limite (YYYY-MM-DDTHH:MM:SS)")
-):
-    query = {"data_entrada": {"$gte": data}}
-    itens = await engine.find(Estoque, query, sort=Estoque.data_entrada)
-    total = await engine.count(Estoque, query)
-    return {"data": itens, "total": total}
-
-# READ: Buscar estoques com entrada antes de uma data
-@router.get("/buscar/entrada/antes", response_model=dict)
-async def buscar_estoques_entrada_antes(
-    data: datetime = Query(..., description="Data limite (YYYY-MM-DDTHH:MM:SS)")
-):
-    query = {"data_entrada": {"$lte": data}}
-    itens = await engine.find(Estoque, query, sort=Estoque.data_entrada)
     total = await engine.count(Estoque, query)
     return {"data": itens, "total": total}
