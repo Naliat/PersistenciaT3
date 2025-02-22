@@ -1,4 +1,5 @@
 import logging
+from bson import ObjectId
 from fastapi import APIRouter, Query, HTTPException, Path
 from models.estoque import Estoque
 from models.remedio import Remedio
@@ -22,16 +23,31 @@ router = APIRouter(
 @router.post("/", response_model=Estoque, status_code=201)
 async def criar_estoque(estoque: Estoque):
     logger.info("Iniciando criação do estoque para o remédio: %s", estoque.remedio)
-    if estoque.remedio:
-        remedio = await engine.find_one(Remedio, {"id": estoque.remedio.id})
+    
+    # Verifique se o ID do remédio é uma string ou ObjectId e busque o remédio
+    if estoque.remedio and estoque.remedio.id:
+        # Se o ID for uma string, converta para ObjectId para buscar corretamente no banco
+        try:
+            remedio_id = ObjectId(estoque.remedio.id)
+        except Exception as e:
+            logger.error(f"Erro ao tentar converter ID do remédio: {e}")
+            raise HTTPException(status_code=400, detail="ID do remédio inválido")
+        
+        # Busque o remédio no banco de dados com o ObjectId
+        remedio = await engine.find_one(Remedio, {"_id": remedio_id})
+        
         if not remedio:
             logger.error("Remédio não encontrado para o estoque")
             raise HTTPException(status_code=400, detail="Remédio não encontrado")
+        
+        # Atualize a referência para o objeto Remedio completo
         estoque.remedio = remedio
+    
+    # Salve o estoque no banco de dados
     novo_estoque = await engine.save(estoque)
     logger.info("Estoque criado com ID: %s", novo_estoque.id)
+    
     return novo_estoque
-
 # READ: Listar estoques com filtro (paginação)
 @router.get("/", response_model=dict)
 async def listar_estoques(
