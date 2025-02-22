@@ -67,3 +67,31 @@ e coloca os dados referente ao estoque
   "atualizado_em": "2025-02-21T15:00:00",
   "id": "67ba17e7e178545bca028c99"
 }
+
+
+
+remedio
+put
+ {
+      "nome": "Regis Pires Magalhães 750mg",
+      "descricao": "Analgésico e antitérmico",
+      "preco": 12.5,
+      "validade": "2025-12-31T00:00:00",
+      "fornecedor_id": "67ba15648b5583d2b4a8b95e",
+      "criado_em": "2025-02-22T23:24:54.848000",
+      "atualizado_em": "2025-02-22T23:24:54.848000"
+    
+    }
+
+
+    post
+
+    {
+  "nome": "Mangaa 750mg",
+  "descricao": "Analgésico e antitérmico",
+  "preco": 12.5,
+  "validade": "2025-12-31T00:00:00Z",
+  "fornecedor_id": "67ba15648b5583d2b4a8b95e",
+  "criado_em": "2025-02-22T23:24:54.848Z",
+  "atualizado_em": "2025-02-22T23:24:54.848Z"
+}
