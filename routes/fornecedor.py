@@ -1,10 +1,11 @@
-from odmantic import ObjectId
+from odmantic import AIOEngine, ObjectId
 import logging
 import re
 from fastapi import APIRouter, Query, HTTPException, Path, Body
+from pydantic import BaseModel
 from models.fornecedor import Fornecedor
 from database import engine
-from typing import Optional, Dict
+from typing import List, Optional, Dict
 from datetime import datetime, timezone
 
 # Configurar o logger
@@ -205,3 +206,38 @@ async def buscar_fornecedores_criados_apos(
     total = await engine.count(Fornecedor, query)
     logger.info("Fornecedores encontrados: %s", total)
     return {"data": fornecedores, "total": total}
+
+from fastapi import Query
+from typing import List
+
+@router.get("/agregado/fornecedores-por-endereco", response_model=dict)
+async def fornecedores_por_endereco(
+    endereco: str = Query(..., description="Filtrar fornecedores por endereço (pode ser parcial)")
+):
+    """
+    Retorna todos os fornecedores que possuem o endereço informado (busca parcial).
+    Além disso, informa quantos fornecedores foram encontrados.
+    """
+
+    pipeline = [
+        {"$match": {"endereco": {"$regex": endereco, "$options": "i"}}},  # Busca parcial (ignora maiúsculas/minúsculas)
+        {
+            "$project": {
+                "_id": {"$toString": "$_id"},  # Converte ObjectId para string
+                "nome": 1,
+                "cnpj": 1,
+                "telefone": 1,
+                "endereco": 1,
+                "criado_em": 1,
+                "atualizado_em": 1
+            }
+        }
+    ]
+
+    collection = engine.get_collection(Fornecedor)
+    fornecedores = await collection.aggregate(pipeline).to_list(length=None)
+
+    return {
+        "quantidade": len(fornecedores),  # Retorna a contagem total de fornecedores encontrados
+        "fornecedores": fornecedores
+    }

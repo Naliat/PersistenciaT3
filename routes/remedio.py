@@ -192,7 +192,7 @@ async def buscar_remedios_preco_maior(
     preco: float = Query(..., description="Preço mínimo")
 ):
     logger.info("Buscando remédios com preço maior que: %s", preco)
-    query = {"preco": {"$gt": preco}}
+    query = {"preco": {"$gte": preco}}
     remedios = await engine.find(Remedio, query, sort=Remedio.preco)
     total = await engine.count(Remedio, query)
     logger.info("Remédios encontrados: %s", total)

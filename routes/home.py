@@ -36,3 +36,5 @@ async def home():
             "Estoques": "/estoques"
         }
     }
+
+
