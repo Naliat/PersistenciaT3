@@ -1,3 +1,4 @@
+Repositorio do github https://github.com/Naliat/PersistenciaT3
 Tailan -> Correções finais 
 Kaio -> Diagrama Mermaid
 Kaio -> Routes remedio
