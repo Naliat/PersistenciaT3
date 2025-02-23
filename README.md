@@ -71,7 +71,22 @@ class Fornecedor(Model):
   "nome": "Fornecedor ABC",
   "cnpj": "12.345.678/0001-99",
   "telefone": "(11) 1234-5678",
-  "endereco": "Rua Exemplo, 123, São Paulo, SP"
+  "endereco": "Rua Exemplo, 123, São Paulo, SP",
+  "criado_em": "2025-02-21T15:00:00",
+  "atualizado_em": "2025-02-21T15:00:00"
+}
+```
+
+
+#### Exemplo de PUT:
+```json
+{
+ "nome": "Fornecedor AAAAAAAAAAAA",
+  "cnpj": "12.345.678/0001-99",
+  "telefone": "(11) 1234-5678",
+  "endereco": "Rua Exemplo, 123, São Paulo, SP",
+  "criado_em": "2025-02-21T15:00:00",
+  "atualizado_em": "2025-02-22T21:49:12.371Z"
 }
 ```
 
@@ -93,13 +108,30 @@ class Remedio(Model):
 #### Exemplo de POST:
 ```json
 {
-  "nome": "Paracetamol 750mg",
+  "nome": "Mangaa 750mg",
   "descricao": "Analgésico e antitérmico",
   "preco": 12.5,
-  "validade": "2025-12-31T00:00:00",
-  "fornecedor_id": "67ba15648b5583d2b4a8b95e"
+  "validade": "2025-12-31T00:00:00Z",
+  "fornecedor_id": "67ba15648b5583d2b4a8b95e",
+  "criado_em": "2025-02-22T23:24:54.848Z",
+  "atualizado_em": "2025-02-22T23:24:54.848Z"
 }
 ```
+
+#### Exemplo de PUT:
+```json
+ {
+      "nome": "Regis Pires Magalhães 750mg",
+      "descricao": "Analgésico e antitérmico",
+      "preco": 12.5,
+      "validade": "2025-12-31T00:00:00",
+      "fornecedor_id": "67ba15648b5583d2b4a8b95e",
+      "criado_em": "2025-02-22T23:24:54.848000",
+      "atualizado_em": "2025-02-22T23:24:54.848000"
+    
+    }
+```
+
 
 ### 3. Estoque
 ```python
@@ -118,10 +150,43 @@ class Estoque(Model):
 #### Exemplo de POST:
 ```json
 {
-  "remedio_id": "67ba17e7e178545bca028c99",
+  "remedio": {
+    "nome": "Paracetamol 750mg",
+    "descricao": "Analgésico e antitérmico",
+    "preco": 12.5,
+    "validade": "2025-12-31T00:00:00",
+    "fornecedor_id": "67ba15648b5583d2b4a8b95e",
+    "criado_em": "2025-02-21T15:00:00",
+    "atualizado_em": "2025-02-21T15:00:00",
+    "id": "67ba17e7e178545bca028c99"
+  },
   "quantidade": 100,
   "data_entrada": "2025-02-21T15:00:00",
-  "validade": "2025-12-31T00:00:00"
+  "validade": "2025-12-31T00:00:00",
+  "criado_em": "2025-02-21T15:00:00",
+  "atualizado_em": "2025-02-21T15:00:00",
+  "id": "67ba17e7e178545bca028c99"
+}
+```
+
+
+#### Exemplo de PUT:
+```json
+{
+  "remedio": {
+    "nome": "Paracetamol 500mg",
+    "descricao": "Analgésico e antitérmico, com nova dosagem",
+    "preco": 15.0,
+    "validade": "2025-12-31T00:00:00",
+    "fornecedor_id": "67ba15648b5583d2b4a8b95e",
+    "criado_em": "2025-02-21T15:00:00",
+    "atualizado_em": "2025-02-21T15:00:00"
+  },
+  "quantidade": 100,
+  "data_entrada": "2025-02-25T10:00:00",
+  "validade": "2025-12-31T00:00:00",
+  "criado_em": "2025-02-25T10:00:00",
+  "atualizado_em": "2025-02-25T10:00:00"
 }
 ```
 
