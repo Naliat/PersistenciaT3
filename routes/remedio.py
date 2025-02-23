@@ -243,3 +243,158 @@ async def buscar_remedios_por_descricao(
     total = await engine.count(Remedio, query)
     logger.info("Remédios encontrados: %s", total)
     return {"data": remedios, "total": total}
+
+# ----------------- Endpoints de Busca Agregada (GET) -----------------
+
+# Agregação: Quantidade de remédios por fornecedor
+@router.get("/agregar/quantidade-por-fornecedor", response_model=dict)
+async def quantidade_remedios_por_fornecedor():
+    logger.info("Agregando quantidade de remédios por fornecedor")
+    
+    pipeline = [
+        {
+            "$group": {
+                "_id": "$fornecedor_id",
+                "total_remedios": {"$sum": 1}
+            }
+        },
+        {
+            "$lookup": {
+                "from": "fornecedor",
+                "localField": "_id",
+                "foreignField": "_id",
+                "as": "fornecedor"
+            }
+        },
+        {
+            "$unwind": "$fornecedor"
+        },
+        {
+            "$project": {
+                "fornecedor_nome": "$fornecedor.nome",
+                "total_remedios": 1
+            }
+        }
+    ]
+    
+    result = await engine.aggregate(Remedio, pipeline)
+    logger.info("Agregação concluída")
+    return {"data": result}
+
+
+# Agregação: Média de preço dos remédios por fornecedor
+@router.get("/agregar/media-preco-por-fornecedor", response_model=dict)
+async def media_preco_remedios_por_fornecedor():
+    logger.info("Calculando média de preço dos remédios por fornecedor")
+    
+    pipeline = [
+        {
+            "$group": {
+                "_id": "$fornecedor_id",
+                "media_preco": {"$avg": "$preco"}
+            }
+        },
+        {
+            "$lookup": {
+                "from": "fornecedor",
+                "localField": "_id",
+                "foreignField": "_id",
+                "as": "fornecedor"
+            }
+        },
+        {
+            "$unwind": "$fornecedor"
+        },
+        {
+            "$project": {
+                "fornecedor_nome": "$fornecedor.nome",
+                "media_preco": 1
+            }
+        }
+    ]
+    
+    result = await engine.aggregate(Remedio, pipeline)
+    logger.info("Agregação concluída")
+    return {"data": result}
+
+# Agregação: Remédio mais caro por fornecedor
+@router.get("/agregar/remedio-mais-caro-por-fornecedor", response_model=dict)
+async def remedio_mais_caro_por_fornecedor():
+    logger.info("Buscando remédio mais caro por fornecedor")
+    
+    pipeline = [
+        {
+            "$sort": {"preco": -1}
+        },
+        {
+            "$group": {
+                "_id": "$fornecedor_id",
+                "remedio_mais_caro": {"$first": "$$ROOT"}
+            }
+        },
+        {
+            "$lookup": {
+                "from": "fornecedor",
+                "localField": "_id",
+                "foreignField": "_id",
+                "as": "fornecedor"
+            }
+        },
+        {
+            "$unwind": "$fornecedor"
+        },
+        {
+            "$project": {
+                "fornecedor_nome": "$fornecedor.nome",
+                "remedio_mais_caro": {
+                    "nome": "$remedio_mais_caro.nome",
+                    "preco": "$remedio_mais_caro.preco"
+                }
+            }
+        }
+    ]
+    
+    result = await engine.aggregate(Remedio, pipeline)
+    logger.info("Agregação concluída")
+    return {"data": result}
+
+# Agregação: Remédio mais barato por fornecedor
+@router.get("/agregar/remedio-mais-barato-por-fornecedor", response_model=dict)
+async def remedio_mais_barato_por_fornecedor():
+    logger.info("Buscando remédio mais barato por fornecedor")
+    
+    pipeline = [
+        {
+            "$sort": {"preco": 1}
+        },
+        {
+            "$group": {
+                "_id": "$fornecedor_id",
+                "remedio_mais_barato": {"$first": "$$ROOT"}
+            }
+        },
+        {
+            "$lookup": {
+                "from": "fornecedor",
+                "localField": "_id",
+                "foreignField": "_id",
+                "as": "fornecedor"
+            }
+        },
+        {
+            "$unwind": "$fornecedor"
+        },
+        {
+            "$project": {
+                "fornecedor_nome": "$fornecedor.nome",
+                "remedio_mais_barato": {
+                    "nome": "$remedio_mais_barato.nome",
+                    "preco": "$remedio_mais_barato.preco"
+                }
+            }
+        }
+    ]
+    
+    result = await engine.aggregate(Remedio, pipeline)
+    logger.info("Agregação concluída")
+    return {"data": result}
