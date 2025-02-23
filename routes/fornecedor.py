@@ -4,7 +4,7 @@ import re
 from fastapi import APIRouter, Query, HTTPException, Path, Body
 from models.fornecedor import Fornecedor
 from database import engine
-from typing import Optional
+from typing import Optional, Dict
 from datetime import datetime
 
 # Configurar o logger
@@ -77,39 +77,60 @@ async def atualizar_fornecedor(
     fornecedor_id: str = Path(..., description="ID do fornecedor a ser atualizado"),
     fornecedor_update: Fornecedor = Body(...)
 ):
-    logger.info("Atualizando fornecedor com ID: %s", fornecedor_id)
-    
-    fornecedor_existente = await engine.find_one(Fornecedor, Fornecedor.id == ObjectId(fornecedor_id))
+    try:
+        # Buscar o fornecedor existente pelo ID
+        fornecedor_existente = await engine.find_one(Fornecedor, Fornecedor.id == ObjectId(fornecedor_id))
 
-    if not fornecedor_existente:
-        logger.error("Fornecedor com ID %s não encontrado para atualização", fornecedor_id)
-        raise HTTPException(status_code=404, detail="Fornecedor não encontrado")
+        if not fornecedor_existente:
+            raise HTTPException(status_code=404, detail="Fornecedor não encontrado")
 
-    update_data = fornecedor_update.dict(exclude_unset=True)
-    
-    for key, value in update_data.items():
-        setattr(fornecedor_existente, key, value)
+        # Excluir campos que não devem ser atualizados
+        update_data = fornecedor_update.dict(exclude_unset=True)
+        update_data.pop('criado_em', None)  # Não deve ser atualizado
+        update_data.pop('id', None)  # Não deve ser atualizado diretamente
 
-    fornecedor_existente.atualizado_em = datetime.utcnow()
-    updated_fornecedor = await engine.save(fornecedor_existente)
-    
-    logger.info("Fornecedor com ID %s atualizado", fornecedor_id)
-    return updated_fornecedor
+        # Atualizar o campo 'atualizado_em'
+        update_data['atualizado_em'] = datetime.utcnow()
 
-# DELETE: Remover um fornecedor
-@router.delete("/{fornecedor_id}", response_model=dict)
+        # Atualizar os campos do fornecedor
+        for key, value in update_data.items():
+            setattr(fornecedor_existente, key, value)
+
+        # Salvar as alterações
+        updated_fornecedor = await engine.save(fornecedor_existente)
+
+        return updated_fornecedor
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Erro interno ao atualizar fornecedor")
+
+@router.delete("/{fornecedor_id}", response_model=Dict[str, str])
 async def deletar_fornecedor(
-    fornecedor_id: int = Path(..., description="ID do fornecedor a ser deletado")
+    fornecedor_id: str = Path(..., description="ID do fornecedor a ser deletado")
 ):
     logger.info("Deletando fornecedor com ID: %s", fornecedor_id)
-    fornecedor = await engine.find_one(Fornecedor, {"id": fornecedor_id})
+    
+    try:
+        # Convertendo o fornecedor_id para ObjectId se necessário
+        fornecedor_object_id = ObjectId(fornecedor_id)  # Se for um ObjectId do MongoDB
+
+        # Buscar o fornecedor com o ID fornecido
+        fornecedor = await engine.find_one(Fornecedor, {"_id": fornecedor_object_id})
+        
+    except Exception as e:
+        logger.error(f"Erro ao tentar converter o ID: {str(e)}")
+        raise HTTPException(status_code=400, detail="ID de fornecedor inválido")
+    
     if not fornecedor:
         logger.error("Fornecedor com ID %s não encontrado para deleção", fornecedor_id)
         raise HTTPException(status_code=404, detail="Fornecedor não encontrado")
+    
+    # Deletar o fornecedor
     await engine.delete(fornecedor)
+    
     logger.info("Fornecedor com ID %s deletado com sucesso", fornecedor_id)
+    
+    # Retornar mensagem de sucesso
     return {"message": "Fornecedor deletado com sucesso"}
-
 # ----------------- Endpoints de Busca (GET) -----------------
 # Função para normalizar o CNPJ (remover caracteres especiais)
 def normalizar_cnpj(cnpj: str) -> str:
@@ -131,7 +152,6 @@ async def buscar_fornecedor_por_cnpj(
     
     logger.info("Fornecedor com CNPJ %s encontrado", cnpj_normalizado)
     return fornecedor
-
 @router.get("/buscar/prefixo", response_model=dict)
 async def buscar_fornecedores_por_prefixo(
     prefixo: str = Query(..., description="Prefixo do nome")
@@ -163,17 +183,6 @@ async def listar_fornecedores_ordenados_por_cnpj():
     logger.info("Total de fornecedores encontrados: %s", total)
     return {"data": fornecedores, "total": total}
 
-@router.get("/buscar/telefone", response_model=dict)
-async def buscar_fornecedores_por_telefone(
-    telefone: str = Query(..., description="Parte do telefone")
-):
-    logger.info("Buscando fornecedores com telefone contendo: %s", telefone)
-    query = {"telefone": {"$regex": telefone, "$options": "i"}}
-    fornecedores = await engine.find(Fornecedor, query, sort=Fornecedor.telefone)
-    total = await engine.count(Fornecedor, query)
-    logger.info("Fornecedores encontrados: %s", total)
-    return {"data": fornecedores, "total": total}
-
 @router.get("/buscar/endereco", response_model=dict)
 async def buscar_fornecedores_por_endereco(
     endereco: str = Query(..., description="Parte do endereço")
@@ -195,14 +204,3 @@ async def buscar_fornecedores_criados_apos(
     total = await engine.count(Fornecedor, query)
     logger.info("Fornecedores encontrados: %s", total)
     return {"data": fornecedores, "total": total}
-
-@router.get("/contagem", response_model=dict)
-async def contar_fornecedores():
-    try:
-        logger.info("Iniciando contagem de fornecedores")
-        total = await engine.count(Fornecedor, {})  # Conta todos os fornecedores
-        logger.info(f"Contagem total de fornecedores: {total}")
-        return {"total_fornecedores": total}
-    except Exception as e:
-        logger.error(f"Erro ao contar fornecedores: {str(e)}")
-        raise HTTPException(status_code=500, detail="Erro ao contar fornecedores")

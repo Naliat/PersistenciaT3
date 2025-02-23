@@ -8,7 +8,7 @@ class Remedio(Model):
     preco: float = Field(gt=0)
     validade: datetime
     fornecedor_id: ObjectId  # Use ObjectId em vez de str
-    criado_em: datetime = Field(default_factory=datetime.utcnow)
-    atualizado_em: datetime = Field(default_factory=datetime.utcnow)
+    criado_em: datetime = Field(default_factory=datetime.now)
+    atualizado_em: datetime = Field(default_factory=datetime.now)
 
     model_config = {"collection": "remedios"}

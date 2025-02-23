@@ -5,7 +5,7 @@ from models.remedio import Remedio
 from models.fornecedor import Fornecedor
 from database import engine
 from typing import Optional
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 
 logger = logging.getLogger("remedios")
 logger.setLevel(logging.INFO)
@@ -120,7 +120,7 @@ async def atualizar_remedio(
     update_data = remedio_update.dict(exclude_unset=True)
     for key, value in update_data.items():
         setattr(remedio_existente, key, value)
-    remedio_existente.atualizado_em = datetime.utcnow()
+    remedio_existente.atualizado_em = datetime.now(timezone.utc)
 
     updated_remedio = await engine.save(remedio_existente)
     logger.info("Remédio com ID %s atualizado com sucesso", remedio_id)
