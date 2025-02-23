@@ -5,7 +5,7 @@ from fastapi import APIRouter, Query, HTTPException, Path, Body
 from models.fornecedor import Fornecedor
 from database import engine
 from typing import Optional, Dict
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Configurar o logger
 logger = logging.getLogger("fornecedores")
@@ -74,8 +74,8 @@ async def obter_fornecedor_por_id(
 # UPDATE: Atualizar um fornecedor existente
 @router.put("/{fornecedor_id}", response_model=Fornecedor)
 async def atualizar_fornecedor(
-    fornecedor_id: str = Path(..., description="ID do fornecedor a ser atualizado"),
-    fornecedor_update: Fornecedor = Body(...)
+    fornecedor_id: str = Path(description="ID do fornecedor a ser atualizado"),
+    fornecedor_update: Fornecedor = Body()
 ):
     try:
         # Buscar o fornecedor existente pelo ID
@@ -84,24 +84,25 @@ async def atualizar_fornecedor(
         if not fornecedor_existente:
             raise HTTPException(status_code=404, detail="Fornecedor não encontrado")
 
-        # Excluir campos que não devem ser atualizados
-        update_data = fornecedor_update.dict(exclude_unset=True)
+        # Converter os dados do fornecedor para um dicionário atualizado
+        update_data = fornecedor_update.model_dump(exclude_unset=True)
         update_data.pop('criado_em', None)  # Não deve ser atualizado
         update_data.pop('id', None)  # Não deve ser atualizado diretamente
 
         # Atualizar o campo 'atualizado_em'
-        update_data['atualizado_em'] = datetime.utcnow()
+        update_data['atualizado_em'] = datetime.now(timezone.utc)
 
         # Atualizar os campos do fornecedor
         for key, value in update_data.items():
             setattr(fornecedor_existente, key, value)
 
-        # Salvar as alterações
+        # Salvar as alterações no banco
         updated_fornecedor = await engine.save(fornecedor_existente)
 
         return updated_fornecedor
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Erro interno ao atualizar fornecedor")
+        raise HTTPException(status_code=500, detail=f"Erro interno ao atualizar fornecedor: {str(e)}")
 
 @router.delete("/{fornecedor_id}", response_model=Dict[str, str])
 async def deletar_fornecedor(

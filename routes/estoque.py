@@ -1,11 +1,11 @@
 import logging
 from bson import ObjectId
-from fastapi import APIRouter, Query, HTTPException, Path
+from fastapi import APIRouter, Query, HTTPException, Path, Body
 from models.estoque import Estoque
 from models.remedio import Remedio
 from database import engine
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger("estoques")
 logger.setLevel(logging.INFO)
@@ -91,23 +91,23 @@ async def obter_estoque_por_id(
 # UPDATE: Atualizar um estoque existente
 @router.put("/{estoque_id}", response_model=Estoque)
 async def atualizar_estoque(
-    estoque_id: str = Path(..., description="ID do estoque a ser atualizado"),
-    estoque_update: Estoque = None
+    estoque_id: str = Path(description="ID do estoque a ser atualizado"),
+    estoque_update: Estoque = Body()
 ):
-    # Convertendo o ID de string para ObjectId
     try:
+        # Convertendo o ID de string para ObjectId
         estoque_object_id = ObjectId(estoque_id)
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=400, detail="ID inválido")
 
     # Buscando o estoque pelo ObjectId
     estoque_existente = await engine.find_one(Estoque, Estoque.id == estoque_object_id)
-    
+
     if not estoque_existente:
         raise HTTPException(status_code=404, detail="Estoque não encontrado")
 
-    # Atualizando os dados do estoque
-    update_data = estoque_update.dict(exclude_unset=True)
+    # Convertendo os dados para um dicionário atualizado
+    update_data = estoque_update.model_dump(exclude_unset=True)
 
     # Remover o campo 'id' da atualização para evitar tentar alterá-lo
     update_data.pop("id", None)
@@ -116,9 +116,9 @@ async def atualizar_estoque(
         setattr(estoque_existente, key, value)
 
     # Atualizando a data de modificação
-    estoque_existente.atualizado_em = datetime.utcnow()
+    estoque_existente.atualizado_em = datetime.now(timezone.utc)
 
-    # Salvando a atualização
+    # Salvando as alterações no banco
     updated_estoque = await engine.save(estoque_existente)
 
     return updated_estoque
