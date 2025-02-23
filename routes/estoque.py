@@ -4,7 +4,7 @@ from fastapi import APIRouter, Query, HTTPException, Path, Body
 from models.estoque import Estoque
 from models.remedio import Remedio
 from database import engine
-from typing import Optional
+from typing import Optional, Any, Dict
 from datetime import datetime, timezone
 
 logger = logging.getLogger("estoques")
@@ -214,3 +214,69 @@ async def buscar_estoques_por_quantidade(
     itens = await engine.find(Estoque, query, sort=Estoque.validade)
     total = await engine.count(Estoque, query)
     return {"data": itens, "total": total}
+
+
+@router.get("/agregado/estoque", response_model=Dict[str, Any])
+async def obter_estoque(
+    remedio_nome: Optional[str] = Query(None, description="Filtrar pelo nome do remédio")
+):
+    """
+    Retorna a quantidade total de um remédio no estoque e os detalhes dos estoques onde ele está armazenado.
+    - Se `remedio_nome` for informado, retorna a quantidade total e os estoques relacionados.
+    """
+
+    if not remedio_nome:
+        return {"erro": "Informe um nome de remédio para buscar os dados."}
+
+    pipeline = [
+        # Faz um JOIN entre Estoque e Remedio pelo campo `remedio`
+        {
+            "$lookup": {
+                "from": "remedios",  # Nome da coleção de remédios
+                "localField": "remedio",
+                "foreignField": "_id",
+                "as": "remedio"
+            }
+        },
+        {"$unwind": "$remedio"},  # Converte o array de remédio em objeto único
+
+        # Filtra pelo nome do remédio (busca parcial, case-insensitive)
+        {
+            "$match": {
+                "remedio.nome": {"$regex": remedio_nome, "$options": "i"}
+            }
+        },
+
+        # Agrupa por nome do remédio e soma a quantidade total em todos os estoques
+        {
+            "$group": {
+                "_id": "$remedio.nome",
+                "quantidade_total": {"$sum": "$quantidade"},
+                "estoques": {
+                    "$push": {
+                        "estoque_id": "$_id",
+                        "quantidade": "$quantidade",
+                        "data_entrada": "$data_entrada"
+                    }
+                }
+            }
+        }
+    ]
+
+    collection = engine.get_collection(Estoque)
+    resultados = await collection.aggregate(pipeline).to_list(length=None)
+
+    if not resultados:
+        return {"mensagem": "Nenhum estoque encontrado para esse remédio."}
+
+    resultado = resultados[0]
+    
+    # Converter ObjectId para string
+    for estoque in resultado["estoques"]:
+        estoque["estoque_id"] = str(estoque["estoque_id"])
+
+    return {
+        "remedio": resultado["_id"],  # Nome do remédio
+        "quantidade_total": resultado["quantidade_total"],
+        "estoques": resultado["estoques"]
+    }
