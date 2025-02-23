@@ -1,41 +1,41 @@
 ## Diagrama de Classes UML
+## Diagrama de Classes
+
+Aqui está o diagrama de classes para as entidades principais do sistema.
+
 ```mermaid
 classDiagram
-    direction LR
     class Fornecedor {
-        id: int
-        nome: str
-        cnpj: str
-        telefone: Optional[str]
-        endereco: Optional[str]
-        remedios: List[Remedio]
+        +String nome
+        +String cnpj
+        +String telefone
+        +String endereco
+        +datetime criado_em
+        +datetime atualizado_em
     }
-
+    
     class Remedio {
-        id: int
-        nome: str
-        descricao: str
-        validade: date
-        preco: float
-        created_at: datetime
-        updated_at: datetime
-        fornecedor_id: int
-        fornecedor: Fornecedor
-        estoques: List[Estoque]
+        +String nome
+        +String descricao
+        +Float preco
+        +datetime validade
+        +ObjectId fornecedor_id
+        +datetime criado_em
+        +datetime atualizado_em
     }
-
+    
     class Estoque {
-        id: int
-        quantidade: int
-        data_entrada_estoque: datetime
-        validade: datetime
-        remedio_id: int
-        remedio: Remedio
+        +ObjectId remedio_id
+        +Int quantidade
+        +datetime data_entrada
+        +datetime validade
+        +datetime criado_em
+        +datetime atualizado_em
     }
 
-    Fornecedor "1" --> "0..*" Remedio: fornece
-    Remedio "1" --> "0..*" Estoque: possui
-    Estoque "0..*" --> "1" Remedio: armazena
+    Fornecedor "1" --> "0..*" Remedio : fornece
+    Remedio "1" --> "0..*" Estoque : tem
+
 ```
 
 ![image](https://github.com/user-attachments/assets/5f9619dc-90fc-4cd7-a2fa-b12a21cdf39d)
