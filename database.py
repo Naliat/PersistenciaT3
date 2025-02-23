@@ -15,3 +15,9 @@ engine = AIOEngine(client=client, database="farmacia_db")
 
 def get_engine():
     return engine
+
+async def aggregate(pipeline, collection_name):
+    db = client["farmacia_db"]
+    cursor = db[collection_name].aggregate(pipeline)
+    result = await cursor.to_list(length=None)
+    return result

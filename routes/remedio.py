@@ -3,7 +3,7 @@ from bson import ObjectId
 from fastapi import APIRouter, Query, HTTPException, Path
 from models.remedio import Remedio
 from models.fornecedor import Fornecedor
-from database import engine
+from database import engine, aggregate
 from typing import Optional
 from datetime import date, datetime, timezone
 
@@ -277,9 +277,13 @@ async def quantidade_remedios_por_fornecedor():
         }
     ]
     
-    result = await engine.aggregate(Remedio, pipeline)
-    logger.info("Agregação concluída")
-    return {"data": result}
+    try:
+        result = await aggregate(pipeline, Remedio.__collection__)
+        logger.info("Agregação concluída")
+        return {"data": result}
+    except Exception as e:
+        logger.error(f"Erro durante a agregação: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erro durante a agregação: {str(e)}")
 
 
 # Agregação: Média de preço dos remédios por fornecedor
@@ -313,9 +317,13 @@ async def media_preco_remedios_por_fornecedor():
         }
     ]
     
-    result = await engine.aggregate(Remedio, pipeline)
-    logger.info("Agregação concluída")
-    return {"data": result}
+    try:
+        result = await aggregate(pipeline, Remedio.__collection__)
+        logger.info("Agregação concluída")
+        return {"data": result}
+    except Exception as e:
+        logger.error(f"Erro durante a agregação: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erro durante a agregação: {str(e)}")
 
 # Agregação: Remédio mais caro por fornecedor
 @router.get("/agregar/remedio-mais-caro-por-fornecedor", response_model=dict)
@@ -354,9 +362,13 @@ async def remedio_mais_caro_por_fornecedor():
         }
     ]
     
-    result = await engine.aggregate(Remedio, pipeline)
-    logger.info("Agregação concluída")
-    return {"data": result}
+    try:
+        result = await aggregate(pipeline, Remedio.__collection__)
+        logger.info("Agregação concluída")
+        return {"data": result}
+    except Exception as e:
+        logger.error(f"Erro durante a agregação: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erro durante a agregação: {str(e)}")
 
 # Agregação: Remédio mais barato por fornecedor
 @router.get("/agregar/remedio-mais-barato-por-fornecedor", response_model=dict)
@@ -395,6 +407,10 @@ async def remedio_mais_barato_por_fornecedor():
         }
     ]
     
-    result = await engine.aggregate(Remedio, pipeline)
-    logger.info("Agregação concluída")
-    return {"data": result}
+    try:
+        result = await aggregate(pipeline, Remedio.__collection__)
+        logger.info("Agregação concluída")
+        return {"data": result}
+    except Exception as e:
+        logger.error(f"Erro durante a agregação: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erro durante a agregação: {str(e)}")
