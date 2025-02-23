@@ -24,17 +24,10 @@ router = APIRouter(
 async def criar_remedio(remedio: Remedio):
     logger.info("Iniciando criação do remédio: %s", remedio.nome)
 
-    # Converte o fornecedor_id para ObjectId
-    try:
-        fornecedor_id = ObjectId(remedio.fornecedor_id)
-    except Exception as e:
-        logger.error("ID do fornecedor inválido: %s", remedio.fornecedor_id)
-        raise HTTPException(status_code=400, detail="ID do fornecedor inválido.")
-
-    # Consulta o fornecedor usando o ObjectId
-    fornecedor = await engine.find_one(Fornecedor, {"_id": fornecedor_id})
+    # Verifica se o fornecedor existe
+    fornecedor = await engine.find_one(Fornecedor, Fornecedor.id == remedio.fornecedor.id)
     if not fornecedor:
-        logger.error("Fornecedor com ID %s não encontrado para o remédio: %s", fornecedor_id, remedio.nome)
+        logger.error("Fornecedor com ID %s não encontrado para o remédio: %s", remedio.fornecedor.id, remedio.nome)
         raise HTTPException(status_code=400, detail="Fornecedor não encontrado.")
 
     # Salva o remédio no banco de dados
@@ -54,14 +47,29 @@ async def listar_remedios(
     logger.info("Listando remédios - Página: %s, Limite: %s", pagina, limite)
     skip = (pagina - 1) * limite
     query = {}
+
+    # Filtro por nome
     if nome:
         query["nome"] = {"$regex": nome, "$options": "i"}
+
+    # Filtro por validade
     if validade_inicio and validade_fim:
-        validade_inicio = datetime.combine(validade_inicio, datetime.min.time())
-        validade_fim = datetime.combine(validade_fim, datetime.max.time())
-        query["validade"] = {"$gte": validade_inicio, "$lte": validade_fim}
-    total = await engine.count(Remedio, query)
-    remedios = await engine.find(Remedio, query, skip=skip, limit=limite, sort=Remedio.validade)
+        try:
+            validade_inicio_dt = datetime.combine(validade_inicio, datetime.min.time())
+            validade_fim_dt = datetime.combine(validade_fim, datetime.max.time())
+            query["validade"] = {"$gte": validade_inicio_dt, "$lte": validade_fim_dt}
+        except Exception as e:
+            logger.error("Erro ao processar datas de validade: %s", str(e))
+            raise HTTPException(status_code=400, detail="Datas de validade inválidas")
+
+    # Consulta ao banco de dados
+    try:
+        total = await engine.count(Remedio, query)
+        remedios = await engine.find(Remedio, query, skip=skip, limit=limite, sort=Remedio.validade)
+    except Exception as e:
+        logger.error("Erro ao consultar o banco de dados: %s", str(e))
+        raise HTTPException(status_code=500, detail="Erro interno ao listar remédios")
+
     logger.info("Remédios listados: %s itens encontrados", total)
     return {
         "data": remedios,
@@ -112,18 +120,22 @@ async def atualizar_remedio(
         logger.error("ID do remédio inválido: %s", remedio_id)
         raise HTTPException(status_code=400, detail="ID do remédio inválido")
     
-    remedio_existente = await engine.find_one(Remedio, {"_id": remedio_id})
+    remedio_existente = await engine.find_one(Remedio, Remedio.id == remedio_id)
     if not remedio_existente:
         logger.error("Remédio com ID %s não encontrado para atualização", remedio_id)
         raise HTTPException(status_code=404, detail="Remédio não encontrado")
     
     update_data = remedio_update.dict(exclude_unset=True)
+
+    update_data.pop("id", None)
+
     for key, value in update_data.items():
         setattr(remedio_existente, key, value)
-    remedio_existente.atualizado_em = datetime.now(timezone.utc)
+        
+    remedio_existente.atualizado_em = datetime.utcnow()
 
     updated_remedio = await engine.save(remedio_existente)
-    logger.info("Remédio com ID %s atualizado com sucesso", remedio_id)
+
     return updated_remedio
 
 # DELETE: Remover um remédio
@@ -165,7 +177,7 @@ async def listar_remedios_por_fornecedor(
         raise HTTPException(status_code=400, detail="ID do fornecedor inválido")
     
     skip = (pagina - 1) * limite
-    query = {"fornecedor_id": fornecedor_id}
+    query = {"fornecedor.id": fornecedor_id}  # Ajuste aqui
     total = await engine.count(Remedio, query)
     remedios = await engine.find(Remedio, query, skip=skip, limit=limite, sort=Remedio.nome)
     logger.info("Remédios encontrados para fornecedor %s: %s", fornecedor_id, total)
