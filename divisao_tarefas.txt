@@ -1,2 +1,11 @@
-Tailan 
-Kaio
+Tailan -> Correções finais 
+Kaio -> Diagrama Mermaid
+Kaio -> Routes remedio
+Tailan -> Routes fornecedor e estoque
+Tailan -> Popular fornecedor
+Kaio -> Crud Simples
+Tailan -> Consultas agregadas
+Tailan e Kaio -> Modularização e documentação
+Tailan e Kaio -> Models
+Tailan -> get Filtros
+
