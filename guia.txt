@@ -1,0 +1,96 @@
+for
+post
+{
+  "nome": "Fornecedor ABC",
+  "cnpj": "12.345.678/0001-99",
+  "telefone": "(11) 1234-5678",
+  "endereco": "Rua Exemplo, 123, São Paulo, SP",
+  "criado_em": "2025-02-21T15:00:00",
+  "atualizado_em": "2025-02-21T15:00:00"
+}
+
+{
+  "nome": "Fornecedor ABC",
+  "cnpj": "12.345.678/0001-99",
+  "telefone": "(11) 1234-5678",
+  "endereco": "Rua Exemplo, 123, São Paulo, SP",
+  "criado_em": "2025-02-21T15:00:00",
+  "atualizado_em": "2025-02-22T21:49:12.371Z",
+  "id": "67ba44403d182ea3a71ebd1d"
+}
+
+
+
+
+
+estoque 
+
+put 
+
+
+{
+  "remedio": {
+    "nome": "Paracetamol 500mg",
+    "descricao": "Analgésico e antitérmico, com nova dosagem",
+    "preco": 15.0,
+    "validade": "2025-12-31T00:00:00",
+    "fornecedor_id": "67ba15648b5583d2b4a8b95e",
+    "criado_em": "2025-02-21T15:00:00",
+    "atualizado_em": "2025-02-21T15:00:00"
+  },
+  "quantidade": 100,
+  "data_entrada": "2025-02-25T10:00:00",
+  "validade": "2025-12-31T00:00:00",
+  "criado_em": "2025-02-25T10:00:00",
+  "atualizado_em": "2025-02-25T10:00:00"
+}
+
+post
+
+nesse caso a pessoa repete o que foi adcionado do remedio 
+e coloca os dados referente ao estoque
+{
+  "remedio": {
+    "nome": "Simvastatina 20mg",
+    "descricao": "Redutor de colesterol",
+    "preco": 22,
+    "validade": "2025-12-31T00:00:00",
+    "fornecedor_id": "67ba6545889caf423b94bb2f",
+    "criado_em": "2025-01-17T08:00:00",
+    "atualizado_em": "2025-01-17T08:00:00",
+    "id": "67ba66fb889caf423b94bb3f"
+  },
+  "quantidade": 50,
+  "data_entrada": "2025-02-23T11:00:00",
+  "validade": "2025-12-31T00:00:00",
+  "criado_em": "2025-02-23T11:00:00",
+  "atualizado_em": "2025-02-23T11:00:00",
+  "id": "67ba20f7e178545bca028c99"
+}
+
+
+remedio
+put
+ {
+      "nome": "Regis Pires Magalhães 750mg",
+      "descricao": "Analgésico e antitérmico",
+      "preco": 12.5,
+      "validade": "2025-12-31T00:00:00",
+      "fornecedor_id": "67ba15648b5583d2b4a8b95e",
+      "criado_em": "2025-02-22T23:24:54.848000",
+      "atualizado_em": "2025-02-22T23:24:54.848000"
+    
+    }
+
+
+    post
+
+    {
+  "nome": "Mangaa 750mg",
+  "descricao": "Analgésico e antitérmico",
+  "preco": 12.5,
+  "validade": "2025-12-31T00:00:00Z",
+  "fornecedor_id": "67ba15648b5583d2b4a8b95e",
+  "criado_em": "2025-02-22T23:24:54.848Z",
+  "atualizado_em": "2025-02-22T23:24:54.848Z"
+}

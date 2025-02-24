@@ -1,2 +1,13 @@
-Tailan 
-Kaio
+Repositorio do github https://github.com/Naliat/PersistenciaT3
+Tailan -> Correções finais 
+Kaio -> Diagrama Mermaid
+Kaio -> Routes remedio
+Tailan -> Routes fornecedor e estoque
+Tailan -> Popular fornecedor
+Tailan Kaio -> Popular estoque e fornecedor 
+Kaio -> Crud Simples
+Tailan -> Consultas agregadas
+Tailan e Kaio -> Modularização e documentação
+Tailan e Kaio -> Models
+Tailan -> get Filtros
+
