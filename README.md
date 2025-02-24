@@ -1,4 +1,9 @@
-## Diagrama de Classes
+## Sistema Farmácia
+### API para gestão de fornecedores, remédios e estoque
+
+
+
+### Diagrama de Classes
 
 Aqui está o diagrama de classes para as entidades principais do sistema:
 
