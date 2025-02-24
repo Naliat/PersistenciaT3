@@ -37,6 +37,36 @@ direction LR
     Remedio "1" --> "0..*" Estoque : tem
     Estoque "0..*" --> "1" Fornecedor : pertence_a
 ```
+
+## Relações Entre as Entidades
+
+O diagrama mostra as seguintes relações:
+
+### Fornecedor → Remedio ("fornece")
+- Um Fornecedor pode fornecer vários Remédios.
+- Relacionamento 1 para muitos (um fornecedor pode ter 0 ou mais remédios).
+
+### Remedio → Estoque ("tem")
+- Um Remédio pode estar presente em vários registros de Estoque.
+- Relacionamento 1 para muitos (um remédio pode ter 0 ou mais estoques).
+
+### Estoque → Fornecedor ("pertence_a")
+- Embora a relação direta no diagrama entre Estoque e Fornecedor não seja explicitada no objeto Estoque (ele se relaciona ao Remédio, que por sua vez tem referência ao Fornecedor), o diagrama indica que um Estoque também está associado a um Fornecedor.
+- Essa associação pode ser derivada indiretamente através do remédio, pois o remédio possui um fornecedor_id.
+
+## Considerações Finais
+
+### Atualização via PUT:
+O exemplo de PUT atualiza um estoque e, ao mesmo tempo, permite atualizar os dados do remédio vinculado (embora, na prática, a atualização do remédio possa ser gerenciada por outra rota ou lógica de negócio, dependendo da arquitetura).
+
+### Timestamps e Controle de Validade:
+O uso de criado_em, atualizado_em e campos de validade em ambas as entidades (Remedio e Estoque) é essencial para rastrear a evolução dos registros e gerenciar prazos de validade, o que é especialmente importante em ambientes regulados como o de medicamentos.
+
+### Relações entre Entidades:
+As relações estabelecem uma estrutura que facilita consultas agregadas, como “todos os remédios de um fornecedor” ou “estoques disponíveis para um determinado remédio”, permitindo um gerenciamento integrado do sistema.
+
+
+
 # API de Estoque de Medicamentos - FastAPI + Odmantic
 
 Esta aplicação foi construída utilizando o framework **FastAPI** e a biblioteca **Odmantic** para interação com o MongoDB. O objetivo é gerenciar um sistema de estoque de medicamentos, permitindo operações de CRUD (Create, Read, Update, Delete) em medicamentos, fornecedores e estoques, com suporte a relações entre as entidades.
