@@ -54,7 +54,7 @@ O diagrama mostra as seguintes relações:
 - Embora a relação direta no diagrama entre Estoque e Fornecedor não seja explicitada no objeto Estoque (ele se relaciona ao Remédio, que por sua vez tem referência ao Fornecedor), o diagrama indica que um Estoque também está associado a um Fornecedor.
 - Essa associação pode ser derivada indiretamente através do remédio, pois o remédio possui um fornecedor_id.
 
-## Considerações Finais
+## Nesse sentido
 
 ### Atualização via PUT:
 O exemplo de PUT atualiza um estoque e, ao mesmo tempo, permite atualizar os dados do remédio vinculado (embora, na prática, a atualização do remédio possa ser gerenciada por outra rota ou lógica de negócio, dependendo da arquitetura).
